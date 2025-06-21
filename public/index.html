@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>簡易XRカメラアプリ</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #cameraContainer {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: black;
+    }
+
+    #video {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #overlay {
+      position: absolute;
+      top: 20%;
+      left: 30%;
+      color: red;
+      font-size: 2em;
+      background: rgba(255,255,255,0.7);
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    #objectImage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100px;
+      transform: translate(-50%, -50%);
+    }
+  </style>
+</head>
+<body>
+  <div id="cameraContainer">
+    <video id="video" autoplay muted playsinline></video>
+    <div id="overlay">📦 箱が見えています！</div>
+    <img id="objectImage" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Cardboard_box_icon.svg/1200px-Cardboard_box_icon.svg.png" />
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+
+    // カメラの起動
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        alert("カメラにアクセスできません: " + err.message);
+      });
+  </script>
+</body>
+</html>
