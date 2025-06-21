@@ -2,65 +2,101 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>簡易XRカメラアプリ</title>
+  <title>シルエット内パターン切替アプリ</title>
   <style>
     body {
-      margin: 0;
-      overflow: hidden;
+      text-align: center;
+      font-family: sans-serif;
+      background: #eee;
+      padding: 20px;
     }
-
-    #cameraContainer {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      background: black;
+    canvas {
+      border: 1px solid #aaa;
+      max-width: 100%;
+      margin-top: 20px;
     }
-
-    #video {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    #overlay {
-      position: absolute;
-      top: 20%;
-      left: 30%;
-      color: red;
-      font-size: 2em;
-      background: rgba(255,255,255,0.7);
-      padding: 10px;
-      border-radius: 10px;
-    }
-
-    #objectImage {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 100px;
-      transform: translate(-50%, -50%);
+    .btn-group, input {
+      margin: 10px;
     }
   </style>
 </head>
 <body>
-  <div id="cameraContainer">
-    <video id="video" autoplay muted playsinline></video>
-    <div id="overlay">📦 箱が見えています！</div>
-    <img id="objectImage" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Cardboard_box_icon.svg/1200px-Cardboard_box_icon.svg.png" />
+  <h1>🎭 シルエット内パターン切替 🎨</h1>
+
+  <input type="file" id="upload" accept="image/*" /><br>
+
+  <div class="btn-group">
+    <button onclick="applyPattern('1.png')">赤・不気味</button>
+    <button onclick="applyPattern('2.png')">和柄</button>
+    <button onclick="applyPattern('3.png')">おしゃれ</button>
+    <button onclick="useColor()">単色カラー</button>
+    <input type="color" id="colorPicker" value="#ff0000" />
   </div>
 
-  <script>
-    const video = document.getElementById('video');
+  <button onclick="downloadImage()">💾 画像を保存</button>
 
-    // カメラの起動
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
-      .then(stream => {
-        video.srcObject = stream;
-      })
-      .catch(err => {
-        alert("カメラにアクセスできません: " + err.message);
-      });
+  <canvas id="canvas" width="512" height="512"></canvas>
+
+  <script>
+    const upload = document.getElementById("upload");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const colorPicker = document.getElementById("colorPicker");
+
+    let silhouetteImage = null;
+
+    upload.addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        const img = new Image();
+        img.onload = () => {
+          silhouetteImage = img;
+          applyPattern('1.png'); // 初期表示パターン
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function applyPattern(patternFile) {
+      if (!silhouetteImage) return;
+
+      const patternImg = new Image();
+      patternImg.src = patternFile;
+      patternImg.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(patternImg, 0, 0, canvas.width, canvas.height);
+
+        ctx.globalCompositeOperation = "destination-in";
+        ctx.drawImage(silhouetteImage, 0, 0, canvas.width, canvas.height);
+
+        ctx.globalCompositeOperation = "source-over";
+      };
+    }
+
+    function useColor() {
+      if (!silhouetteImage) return;
+
+      const color = colorPicker.value;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.globalCompositeOperation = "destination-in";
+      ctx.drawImage(silhouetteImage, 0, 0, canvas.width, canvas.height);
+
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    function downloadImage() {
+      const link = document.createElement('a');
+      link.download = 'silhouette_result.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
   </script>
 </body>
 </html>
